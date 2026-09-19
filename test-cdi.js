@@ -21,6 +21,8 @@ const ctx2dStub = {
   fill() {},
   stroke() {},
   fillText() {},
+  setTransform() {},
+  drawImage() {},
 };
 
 function elementStub() {
@@ -100,7 +102,7 @@ const sandbox = {
     },
     removeItem: (k) => delete storage[k],
   },
-  window: { scrollTo: () => {} },
+  window: { scrollTo: () => {}, devicePixelRatio: 2 },
   console,
   URL: { createObjectURL: () => "", revokeObjectURL: () => {} },
   Blob: class {},

@@ -2,6 +2,21 @@
 
 const STORAGE_KEY = "cdi-frequentation-v1";
 const NIVEAUX = ["6e", "5e", "4e", "3e"];
+const EXPORT_SCALE = 3;
+const COULEURS_NIVEAUX = { "6e": "#2c5f8a", "5e": "#5a9bd5", "4e": "#f0b429", "3e": "#e2725b" };
+
+function configurerCanvasHD(canvas) {
+  const baseW = 540;
+  const baseH = 280;
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = Math.round(baseW * dpr);
+  canvas.height = Math.round(baseH * dpr);
+  canvas.style.width = baseW + "px";
+  canvas.style.maxWidth = "100%";
+  const ctx = canvas.getContext("2d");
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { baseW, baseH };
+}
 
 const CALENDRIERS = {
   "2024-2025": {
@@ -238,6 +253,7 @@ const $ = (id) => document.getElementById(id);
 
 function init() {
   loadState();
+  configurerCanvasHD($("chart-niveaux"));
   $("zone").value = state.zone;
   const aujourdhui = todayISO();
   $("date").value = aujourdhui;
@@ -275,9 +291,17 @@ function cumulParNiveau(anneeSco) {
 function telechargerPNG() {
   const canvas = $("chart-niveaux");
   const anneeSco = $("filtre-annee").value;
+  const exportCanvas = document.createElement("canvas");
+  const scale = EXPORT_SCALE;
+  exportCanvas.width = canvas.width * scale;
+  exportCanvas.height = canvas.height * scale;
+  const ctx = exportCanvas.getContext("2d");
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+  ctx.drawImage(canvas, 0, 0, exportCanvas.width, exportCanvas.height);
   const link = document.createElement("a");
   link.download = `repartition-niveaux-${anneeSco}.png`;
-  link.href = canvas.toDataURL("image/png");
+  link.href = exportCanvas.toDataURL("image/png");
   link.click();
 }
 
@@ -289,8 +313,8 @@ function dessinerCamembert() {
   const cumuls = cumulParNiveau(anneeSco);
   const total = NIVEAUX.reduce((s, n) => s + cumuls[n], 0);
 
-  const W = canvas.width;
-  const H = canvas.height;
+  const W = 540;
+  const H = 280;
   ctx.clearRect(0, 0, W, H);
 
   ctx.fillStyle = "#232a33";
@@ -308,7 +332,7 @@ function dessinerCamembert() {
   const cx = 130;
   const cy = H / 2 + 10;
   const r = 95;
-  const COULEURS = { "6e": "#2c5f8a", "5e": "#5a9bd5", "4e": "#f0b429", "3e": "#e2725b" };
+  const COULEURS = COULEURS_NIVEAUX;
 
   let angle = -Math.PI / 2;
   for (const n of NIVEAUX) {
