@@ -1,0 +1,215 @@
+:root {
+  --bg: #f4f6f9;
+  --card: #ffffff;
+  --primary: #2c5f8a;
+  --primary-light: #e8f0f7;
+  --danger: #b23a3a;
+  --border: #d8dee6;
+  --text: #232a33;
+  --muted: #6b7684;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+}
+
+header {
+  background: var(--primary);
+  color: #fff;
+  padding: 1rem 1.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+header h1 { margin: 0; font-size: 1.4rem; }
+
+.zone-select { display: flex; align-items: center; gap: 0.5rem; }
+
+main {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 1rem 1rem 3rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+.card h2 {
+  margin-top: 0;
+  font-size: 1.1rem;
+  color: var(--primary);
+  border-bottom: 2px solid var(--primary-light);
+  padding-bottom: 0.35rem;
+}
+
+.saisie-date {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+input[type="date"], select, input[type="number"] {
+  padding: 0.4rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 1rem;
+  background: #fff;
+  color: var(--text);
+}
+
+.status { font-size: 0.9rem; font-weight: 600; }
+.status.ok { color: #2e7d46; }
+.status.ko { color: var(--danger); }
+
+.niveaux {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.niveau-input {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  text-align: center;
+}
+
+.niveau-input label, .niveau-input span { font-weight: 600; }
+
+.niveau-input input {
+  width: 100%;
+  text-align: center;
+  font-size: 1.2rem;
+}
+
+.total-input {
+  background: var(--primary-light);
+  border-radius: 8px;
+  justify-content: center;
+  padding: 0.4rem 0;
+}
+
+.total-input output { font-size: 1.3rem; font-weight: 700; color: var(--primary); }
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: center;
+}
+
+button {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #fff;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+button:hover { background: var(--primary-light); }
+
+button.primary {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+
+button.primary:hover { background: #234b6e; }
+
+button.danger { color: var(--danger); border-color: var(--danger); }
+button.danger:hover { background: #fdeaea; }
+
+.import-label {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+table { width: 100%; border-collapse: collapse; }
+
+th, td {
+  padding: 0.45rem 0.6rem;
+  border-bottom: 1px solid var(--border);
+  text-align: right;
+}
+
+th:first-child, td:first-child { text-align: left; }
+
+thead th {
+  background: var(--primary-light);
+  color: var(--primary);
+}
+
+tfoot th {
+  background: var(--primary-light);
+  font-size: 1.05rem;
+}
+
+#table-historique td:nth-child(7),
+#table-historique th:nth-child(7) { text-align: left; }
+
+.muted { color: var(--muted); font-size: 0.9rem; }
+
+#liste-fermetures {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+#liste-fermetures li {
+  background: var(--primary-light);
+  border-radius: 6px;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.9rem;
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+#liste-fermetures button {
+  padding: 0 0.4rem;
+  border: none;
+  background: none;
+  color: var(--danger);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+footer {
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.85rem;
+  padding: 1rem;
+}

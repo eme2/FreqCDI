@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fréquentation CDI</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header>
+  <h1>📚 Fréquentation du CDI</h1>
+  <div class="zone-select">
+    <label for="zone">Zone de vacances :</label>
+    <select id="zone">
+      <option value="A">Zone A</option>
+      <option value="B">Zone B</option>
+      <option value="C" selected>Zone C</option>
+    </select>
+  </div>
+</header>
+
+<main>
+  <section class="card" id="saisie">
+    <h2>Saisie du jour</h2>
+    <div class="saisie-date">
+      <label for="date">Date :</label>
+      <input type="date" id="date">
+      <span id="date-status" class="status"></span>
+    </div>
+    <div class="niveaux">
+      <div class="niveau-input">
+        <label for="s6e">6<sup>e</sup></label>
+        <input type="number" id="s6e" min="0" max="500" placeholder="0">
+      </div>
+      <div class="niveau-input">
+        <label for="s5e">5<sup>e</sup></label>
+        <input type="number" id="s5e" min="0" max="500" placeholder="0">
+      </div>
+      <div class="niveau-input">
+        <label for="s4e">4<sup>e</sup></label>
+        <input type="number" id="s4e" min="0" max="500" placeholder="0">
+      </div>
+      <div class="niveau-input">
+        <label for="s3e">3<sup>e</sup></label>
+        <input type="number" id="s3e" min="0" max="500" placeholder="0">
+      </div>
+      <div class="niveau-input total-input">
+        <span>Total jour</span>
+        <output id="total-jour">0</output>
+      </div>
+    </div>
+    <div class="actions">
+      <button id="btn-save" class="primary">Enregistrer</button>
+      <button id="btn-delete-day" class="danger">Supprimer la saisie de ce jour</button>
+    </div>
+  </section>
+
+  <section class="card" id="cumuls">
+    <h2>Cumuls</h2>
+    <div class="filters">
+      <label for="filtre-annee">Année scolaire :</label>
+      <select id="filtre-annee"></select>
+      <label for="filtre-trimestre">Trimestre :</label>
+      <select id="filtre-trimestre">
+        <option value="all">Année entière</option>
+        <option value="1">Trimestre 1</option>
+        <option value="2">Trimestre 2</option>
+        <option value="3">Trimestre 3</option>
+      </select>
+    </div>
+    <table id="table-cumuls">
+      <thead>
+        <tr>
+          <th>Niveau</th>
+          <th>Cumul d'élèves</th>
+          <th>Moyenne / jour ouvert</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+      <tfoot>
+        <tr>
+          <th>Total</th>
+          <th id="cumul-total">0</th>
+          <th id="cumul-moyenne">0</th>
+        </tr>
+      </tfoot>
+    </table>
+    <p id="jours-info" class="muted"></p>
+  </section>
+
+  <section class="card" id="historique">
+    <h2>Historique des saisies</h2>
+    <table id="table-historique">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>6<sup>e</sup></th>
+          <th>5<sup>e</sup></th>
+          <th>4<sup>e</sup></th>
+          <th>3<sup>e</sup></th>
+          <th>Total</th>
+          <th>Trimestre</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <p id="historique-vide" class="muted">Aucune saisie enregistrée pour le moment.</p>
+  </section>
+
+  <section class="card" id="fermetures">
+    <h2>Jours de fermeture</h2>
+    <p class="muted">Les lundis, mardis, jeudis et vendredis tombant pendant les vacances scolaires sont fermés automatiquement. Ajoutez ici les autres jours de fermeture (mercredi excepté, ponts, blocages…).</p>
+    <div class="actions">
+      <label for="date-fermeture">Fermeture exceptionnelle :</label>
+      <input type="date" id="date-fermeture">
+      <button id="btn-add-fermeture">Ajouter</button>
+    </div>
+    <ul id="liste-fermetures"></ul>
+    <p class="muted">Calendriers des zones A, B et C intégrés pour les années scolaires 2024-2025 et 2025-2026. Pour les années suivantes, ajoutez les fermetures manuellement.</p>
+  </section>
+
+  <section class="card" id="donnees">
+    <h2>Données</h2>
+    <div class="actions">
+      <button id="btn-export-csv">Exporter en CSV</button>
+      <button id="btn-export-json">Sauvegarder (JSON)</button>
+      <label class="import-label">Restaurer (JSON)
+        <input type="file" id="import-json" accept=".json,application/json">
+      </label>
+      <button id="btn-reset" class="danger">Tout effacer</button>
+    </div>
+    <p class="muted">Les données sont enregistrées dans ce navigateur (localStorage). Pensez à faire une sauvegarde JSON régulièrement.</p>
+  </section>
+</main>
+
+<footer>
+  <p>CDI — suivi de fréquentation</p>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>
