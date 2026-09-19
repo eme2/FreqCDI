@@ -252,6 +252,7 @@ function init() {
   $("filtre-annee").addEventListener("change", majCumuls);
   $("filtre-trimestre").addEventListener("change", majCumuls);
   $("btn-add-fermeture").addEventListener("click", ajouterFermeture);
+  $("btn-download-png").addEventListener("click", telechargerPNG);
   $("btn-export-csv").addEventListener("click", exporterCSV);
   $("btn-export-json").addEventListener("click", exporterJSON);
   $("import-json").addEventListener("change", importerJSON);
@@ -260,6 +261,104 @@ function init() {
   majCumuls();
   majHistorique();
   majFermetures();
+}
+
+function cumulParNiveau(anneeSco) {
+  const cumuls = { "6e": 0, "5e": 0, "4e": 0, "3e": 0 };
+  for (const iso of Object.keys(state.entries)) {
+    if (anneeScolaire(iso) !== anneeSco) continue;
+    for (const n of NIVEAUX) cumuls[n] += state.entries[iso][n] || 0;
+  }
+  return cumuls;
+}
+
+function telechargerPNG() {
+  const canvas = $("chart-niveaux");
+  const anneeSco = $("filtre-annee").value;
+  const link = document.createElement("a");
+  link.download = `repartition-niveaux-${anneeSco}.png`;
+  link.href = canvas.toDataURL("image/png");
+  link.click();
+}
+
+function dessinerCamembert() {
+  const canvas = $("chart-niveaux");
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
+  const anneeSco = $("filtre-annee").value;
+  const cumuls = cumulParNiveau(anneeSco);
+  const total = NIVEAUX.reduce((s, n) => s + cumuls[n], 0);
+
+  const W = canvas.width;
+  const H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  ctx.fillStyle = "#232a33";
+  ctx.font = "600 16px 'Segoe UI', system-ui, sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText(`Répartition des fréquentations par niveau — ${anneeSco}`, W / 2, 26);
+
+  if (!total) {
+    ctx.fillStyle = "#6b7684";
+    ctx.font = "14px 'Segoe UI', system-ui, sans-serif";
+    ctx.fillText("Aucune saisie pour cette année scolaire", W / 2, H / 2);
+    return;
+  }
+
+  const cx = 130;
+  const cy = H / 2 + 10;
+  const r = 95;
+  const COULEURS = { "6e": "#2c5f8a", "5e": "#5a9bd5", "4e": "#f0b429", "3e": "#e2725b" };
+
+  let angle = -Math.PI / 2;
+  for (const n of NIVEAUX) {
+    const part = cumuls[n] / total;
+    if (part <= 0) continue;
+    const delta = part * 2 * Math.PI;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, r, angle, angle + delta);
+    ctx.closePath();
+    ctx.fillStyle = COULEURS[n];
+    ctx.fill();
+    if (part >= 0.05) {
+      const mid = angle + delta / 2;
+      const tx = cx + (r * 0.6) * Math.cos(mid);
+      const ty = cy + (r * 0.6) * Math.sin(mid);
+      ctx.fillStyle = part >= 0.33 ? "#fff" : "#232a33";
+      ctx.font = "600 13px 'Segoe UI', system-ui, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText(`${Math.round(part * 100)}%`, tx, ty);
+    }
+    angle += delta;
+  }
+
+  ctx.strokeStyle = "#d8dee6";
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, 2 * Math.PI);
+  ctx.stroke();
+
+  const legendeX = 250;
+  let legendeY = 70;
+  for (const n of NIVEAUX) {
+    ctx.fillStyle = COULEURS[n];
+    ctx.fillRect(legendeX, legendeY - 12, 14, 14);
+    ctx.strokeStyle = "#d8dee6";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(legendeX, legendeY - 12, 14, 14);
+    ctx.fillStyle = "#232a33";
+    ctx.font = "14px 'Segoe UI', system-ui, sans-serif";
+    ctx.textAlign = "left";
+    const libelle = n.replace("e", "e");
+    ctx.fillText(`${libelle} — ${cumuls[n]} élèves (${((cumuls[n] / total) * 100).toFixed(1)}%)`, legendeX + 22, legendeY);
+    legendeY += 34;
+  }
+
+  ctx.fillStyle = "#6b7684";
+  ctx.font = "12px 'Segoe UI', system-ui, sans-serif";
+  ctx.textAlign = "left";
+  ctx.fillText(`Total : ${total} passages`, legendeX + 22, legendeY + 6);
 }
 
 function initFiltreAnnee() {
@@ -413,6 +512,7 @@ function majCumuls() {
     info = `${libelle} — Jours comptabilisés : ${nbJours} — Jours d'ouverture (à ce jour) : ${ouverts}`;
   }
   $("jours-info").textContent = info;
+  dessinerCamembert();
 }
 
 function majHistorique() {

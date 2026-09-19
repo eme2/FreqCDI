@@ -5,6 +5,24 @@ const path = require("path");
 
 const code = fs.readFileSync(path.join(__dirname, "app.js"), "utf8");
 
+const ctx2dStub = {
+  fillStyle: "",
+  strokeStyle: "",
+  lineWidth: 1,
+  font: "",
+  textAlign: "",
+  clearRect() {},
+  fillRect() {},
+  strokeRect() {},
+  beginPath() {},
+  moveTo() {},
+  arc() {},
+  closePath() {},
+  fill() {},
+  stroke() {},
+  fillText() {},
+};
+
 function elementStub() {
   const el = {
     value: "",
@@ -12,11 +30,16 @@ function elementStub() {
     innerHTML: "",
     style: {},
     tagName: "DIV",
+    width: 300,
+    height: 150,
     options: [],
     children: [],
     listeners: {},
     addEventListener(evt, fn) {
       el.listeners[evt] = fn;
+    },
+    click() {
+      el.clicked = true;
     },
     dispatch(evt) {
       if (el.listeners[evt]) el.listeners[evt]();
@@ -31,6 +54,12 @@ function elementStub() {
     querySelector() {
       return elementStub();
     },
+    getContext() {
+      return ctx2dStub;
+    },
+    toDataURL() {
+      return "data:image/png;base64,STUB";
+    },
   };
   return el;
 }
@@ -42,7 +71,7 @@ const elements = {};
   "btn-add-fermeture", "date-fermeture", "liste-fermetures",
   "btn-export-csv", "btn-export-json", "import-json", "btn-reset",
   "jours-info", "cumul-total", "cumul-moyenne", "historique-vide",
-  "table-cumuls", "table-historique",
+  "table-cumuls", "table-historique", "chart-niveaux", "btn-download-png",
 ].forEach((id) => (elements[id] = elementStub()));
 
 const domReadyHandlers = [];
@@ -160,7 +189,26 @@ check("lundi de Pâques 2026", context.toISO(context.addDays(context.paques(2026
 check("ascension 2026", context.toISO(context.addDays(context.paques(2026), 39)), "2026-05-14");
 check("lundi de Pâques 2025", context.toISO(context.addDays(context.paques(2025), 1)), "2025-04-21");
 
-// 8. Changement de zone : hiver zone A vs C
+// 8. Camembert annuel : cumuls et rendu sans erreur
+check("cumulParNiveau 2025-2026 (6e)", vm.runInContext('cumulParNiveau("2025-2026")["6e"]', context), 19);
+let dessinErreur = null;
+try {
+  context.dessinerCamembert();
+} catch (e) {
+  dessinErreur = e;
+}
+check("dessinerCamembert() sans erreur", dessinErreur === null, true);
+if (dessinErreur) console.error("  → " + dessinErreur.message);
+let exportErreur = null;
+try {
+  context.telechargerPNG();
+} catch (e) {
+  exportErreur = e;
+}
+check("telechargerPNG() sans erreur", exportErreur === null, true);
+if (exportErreur) console.error("  → " + exportErreur.message);
+
+// 9. Changement de zone : hiver zone A vs C
 vm.runInContext('state.zone = "A"', context);
 check("T3 reprise hiver A", context.trimestreDe("2026-02-23"), 3);
 vm.runInContext('state.zone = "C"', context);
