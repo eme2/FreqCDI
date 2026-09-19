@@ -5,42 +5,70 @@ const path = require("path");
 
 const code = fs.readFileSync(path.join(__dirname, "app.js"), "utf8");
 
-const elementStub = () => {
-  const listeners = {};
-  return {
+function elementStub() {
+  const el = {
     value: "",
     textContent: "",
     innerHTML: "",
     style: {},
-    addEventListener: (evt, fn) => {
-      listeners[evt] = fn;
+    tagName: "DIV",
+    options: [],
+    children: [],
+    listeners: {},
+    addEventListener(evt, fn) {
+      el.listeners[evt] = fn;
     },
-    appendChild: () => {},
-    append: () => {},
-    querySelector: () => elementStub(),
-    dispatch: (evt) => listeners[evt] && listeners[evt](),
+    dispatch(evt) {
+      if (el.listeners[evt]) el.listeners[evt]();
+    },
+    appendChild(child) {
+      el.children.push(child);
+      if (child && child.tagName === "OPTION") el.options.push(child);
+    },
+    append(...nodes) {
+      for (const n of nodes) el.children.push(n);
+    },
+    querySelector() {
+      return elementStub();
+    },
   };
-};
+  return el;
+}
 
 const elements = {};
-["zone", "date", "date-status", "s6e", "s5e", "s4e", "s3e", "total-jour",
- "btn-save", "btn-delete-day", "filtre-annee", "filtre-trimestre",
- "btn-add-fermeture", "date-fermeture", "liste-fermetures",
- "btn-export-csv", "btn-export-json", "import-json", "btn-reset",
- "jours-info", "cumul-total", "cumul-moyenne", "historique-vide",
- "table-cumuls", "table-historique"]
-  .forEach((id) => (elements[id] = elementStub()));
+[
+  "zone", "date", "date-status", "s6e", "s5e", "s4e", "s3e", "total-jour",
+  "btn-save", "btn-delete-day", "filtre-annee", "filtre-trimestre",
+  "btn-add-fermeture", "date-fermeture", "liste-fermetures",
+  "btn-export-csv", "btn-export-json", "import-json", "btn-reset",
+  "jours-info", "cumul-total", "cumul-moyenne", "historique-vide",
+  "table-cumuls", "table-historique",
+].forEach((id) => (elements[id] = elementStub()));
 
-let storage = {};
-const sandbox = {
-  document: {
-    getElementById: (id) => elements[id],
-    createElement: () => elementStub(),
-    addEventListener: () => {},
+const domReadyHandlers = [];
+const documentStub = {
+  getElementById: (id) => {
+    if (!elements[id]) elements[id] = elementStub();
+    return elements[id];
   },
+  createElement: (tag) => {
+    const el = elementStub();
+    el.tagName = tag.toUpperCase();
+    return el;
+  },
+  addEventListener: (evt, fn) => {
+    if (evt === "DOMContentLoaded") domReadyHandlers.push(fn);
+  },
+};
+
+const storage = {};
+const sandbox = {
+  document: documentStub,
   localStorage: {
     getItem: (k) => (k in storage ? storage[k] : null),
-    setItem: (k, v) => (storage[k] = String(v)),
+    setItem: (k, v) => {
+      storage[k] = String(v);
+    },
     removeItem: (k) => delete storage[k],
   },
   window: { scrollTo: () => {} },
@@ -50,13 +78,12 @@ const sandbox = {
   alert: () => {},
   confirm: () => true,
 };
-sandbox.window.document = sandbox.document;
+sandbox.window.document = documentStub;
 
 const vm = require("vm");
 const context = vm.createContext(sandbox);
 vm.runInContext(code, context);
 
-// Tests
 let failures = 0;
 function check(label, actual, expected) {
   const ok = JSON.stringify(actual) === JSON.stringify(expected);
@@ -67,6 +94,17 @@ function check(label, actual, expected) {
     console.log(`ok: ${label}`);
   }
 }
+
+// 0. init() complet — régression « CALENDRIERS is not iterable » (app.js:271)
+let initError = null;
+try {
+  domReadyHandlers.forEach((fn) => fn());
+} catch (e) {
+  initError = e;
+}
+check("init() s'exécute sans erreur", initError === null, true);
+if (initError) console.error("  → " + initError.message);
+check("init() remplit le filtre année (≥ 3 années)", elements["filtre-annee"].options.length >= 3, true);
 
 // 1. Trimestres 2025-2026 (zone C par défaut)
 check("T1 rentrée", context.trimestreDe("2025-09-01"), 1);
@@ -92,14 +130,11 @@ check("année sco sept", context.anneeScolaire("2025-09-15"), "2025-2026");
 check("année sco janv", context.anneeScolaire("2026-01-10"), "2025-2026");
 
 // 4. Périodes de trimestres
-const p1 = context.periodeTrimestre("2025-2026", 1);
-check("T1 période", p1, ["2025-09-01", "2025-12-19"]);
-const p2 = context.periodeTrimestre("2025-2026", 2);
-check("T2 période", p2, ["2026-01-05", "2026-02-20"]);
-const p3 = context.periodeTrimestre("2025-2026", 3);
-check("T3 période", p3, ["2026-03-09", "2026-07-03"]);
+check("T1 période", context.periodeTrimestre("2025-2026", 1), ["2025-09-01", "2025-12-19"]);
+check("T2 période", context.periodeTrimestre("2025-2026", 2), ["2026-01-05", "2026-02-20"]);
+check("T3 période", context.periodeTrimestre("2025-2026", 3), ["2026-03-09", "2026-07-03"]);
 
-// 5. Comptage jours ouverts T1 2025-2026 complet (sans limite)
+// 5. Comptage jours ouverts T1 2025-2026 complet
 const nT1 = context.compterJoursOuverts("2025-09-01", "2025-12-19", null);
 console.log(`Jours ouverts T1 2025-2026 : ${nT1}`);
 check("T1 a un nombre raisonnable de jours", nT1 > 50 && nT1 < 80, true);
@@ -120,14 +155,19 @@ elements["filtre-trimestre"].value = "2";
 context.majCumuls();
 check("cumul total T2", String(elements["cumul-total"].textContent), "4");
 
-// 7. Paques (vérif externe : Pâques 2026 = 5 avril)
+// 7. Pâques (vérification externe : Pâques 2026 = 5 avril)
 check("lundi de Pâques 2026", context.toISO(context.addDays(context.paques(2026), 1)), "2026-04-06");
 check("ascension 2026", context.toISO(context.addDays(context.paques(2026), 39)), "2026-05-14");
 check("lundi de Pâques 2025", context.toISO(context.addDays(context.paques(2025), 1)), "2025-04-21");
 
-// 8. Zone change : hiver zone A vs C
+// 8. Changement de zone : hiver zone A vs C
 vm.runInContext('state.zone = "A"', context);
 check("T3 reprise hiver A", context.trimestreDe("2026-02-23"), 3);
 vm.runInContext('state.zone = "C"', context);
 
-process.exit(failures ? 1 : 0);
+if (failures) {
+  console.error(`\n${failures} test(s) en échec`);
+  process.exit(1);
+} else {
+  console.log("\nTous les tests passent");
+}

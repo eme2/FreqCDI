@@ -268,7 +268,7 @@ function initFiltreAnnee() {
   const annees = new Set();
   for (const iso of Object.keys(state.entries)) annees.add(anneeScolaire(iso));
   annees.add(anneeScolaire(todayISO()));
-  for (const y of CALENDRIERS) annees.add(y);
+  for (const y of Object.keys(CALENDRIERS)) annees.add(y);
   const liste = [...annees].sort();
   for (const y of liste) {
     const opt = document.createElement("option");
